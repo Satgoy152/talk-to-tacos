@@ -1,0 +1,20 @@
+[project]
+name = "sql-ai-agent"
+version = "0.1.0"
+description = "A Streamlit app with a Langgraph agent to query Excel data via natural language."
+authors = [{ name = "AI Assistant", email = "assistant@example.com" }]
+requires-python = ">=3.9"
+dependencies = [
+    "streamlit",
+    "pandas",
+    "SQLAlchemy",
+    "openpyxl",
+    "langchain",
+    "langchain-google-genai", # Switched from openai to google-genai
+    "langgraph",
+    "python-dotenv",
+    "ipykernel>=6.29.5",
+]
+
+[tool.uv]
+# Add any uv specific configurations here if needed
