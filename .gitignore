@@ -1,0 +1,4 @@
+.env
+__pycache__/
+conversations.db
+temp_db.sqlite
