@@ -1,6 +1,10 @@
 from dotenv import load_dotenv
 load_dotenv()
 import streamlit as st
+if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
+    with open("gcp_creds.json", "w") as f:
+        f.write(st.secrets["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "gcp_creds.json"
 import pandas as pd
 from database import create_db_from_excel, query_db
 from agent import get_agent_response
