@@ -3,14 +3,6 @@ import os
 load_dotenv()
 import streamlit as st
 
-# Set custom page config and favicon
-st.set_page_config(
-    page_title="Optiwise Tacos AI Agent",
-    page_icon="img/optiwise.png",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
 # Improved logo and title alignment with public logo URL
 st.markdown("""
     <div style="display: flex; align-items: center; gap: 2.5rem; margin-bottom: 1.5rem;">
@@ -25,10 +17,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Handle Google credentials
-# if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
-#     with open("gcp_creds.json", "w") as f:
-#         f.write(st.secrets["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
-#     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "gcp_creds.json"
+if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
+    with open("gcp_creds.json", "w") as f:
+        f.write(st.secrets["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "gcp_creds.json"
 
 import pandas as pd
 from database import create_db_from_excel, query_db
