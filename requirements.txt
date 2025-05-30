@@ -1,11 +1,12 @@
+google-cloud-sql-connector==1.5.0
 streamlit
 pandas
 openpyxl
 python-dotenv
 sqlalchemy
 google-cloud-secret-manager
-google-cloud-sql-connector
 pymysql
 numpy
 tabulate
 mysql-connector-python
+
