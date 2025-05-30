@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import os
 load_dotenv()
 import streamlit as st
 if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
@@ -9,7 +10,6 @@ import pandas as pd
 from database import create_db_from_excel, query_db
 from agent import get_agent_response
 from conversation_store import ConversationStore
-import os
 import uuid
 
 # Initialize conversation store
