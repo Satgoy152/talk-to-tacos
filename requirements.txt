@@ -4,7 +4,7 @@ openpyxl
 python-dotenv
 sqlalchemy
 google-cloud-secret-manager
-google-cloud-sql-connector
+google-cloud-sql-python-connector
 pymysql
 numpy
 tabulate
