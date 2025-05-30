@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 import streamlit as st
 import pandas as pd
 from database import create_db_from_excel, query_db
@@ -42,10 +44,15 @@ if uploaded_file is not None:
             print(f"Initialized new thread_id for new DB: {st.session_state.thread_id}")
             
             # Save the new conversation
-            conversation_store.save_conversation(st.session_state.thread_id, db_path)
+            conversation_store.save_message(
+                st.session_state.thread_id,
+                "system",
+                "Conversation started.",
+                db_path
+            )
             
             # Load any existing conversation history
-            history = conversation_store.get_conversation_history(st.session_state.thread_id)
+            history = conversation_store.get_conversation_history(st.session_state.thread_id, db_path)
             if history:
                 st.session_state.messages = history
 
@@ -66,6 +73,7 @@ if uploaded_file is not None:
                 st.session_state.thread_id,
                 "user",
                 prompt,
+                db_path,
                 metadata={"db_path": db_path}
             )
 
@@ -83,6 +91,7 @@ if uploaded_file is not None:
                     st.session_state.thread_id,
                     "assistant",
                     response,
+                    db_path,
                     metadata={"db_path": db_path}
                 )
             except Exception as e:

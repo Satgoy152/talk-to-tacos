@@ -1,13 +1,21 @@
-import sqlite3
+from google.cloud.sql.connector import Connector
+import pymysql
 import json
-from datetime import datetime
 from tabulate import tabulate
+from gcp_config import DB_CONFIG
 
 def view_conversations():
-    # Connect to the conversations database
-    conn = sqlite3.connect('conversations.db')
+    # Connect to the GCP MySQL database
+    connector = Connector()
+    conn = connector.connect(
+        instance_connection_string=DB_CONFIG['instance_connection_name'],
+        driver="pymysql",
+        user=DB_CONFIG['user'],
+        password=DB_CONFIG['password'](),
+        db=DB_CONFIG['database'],
+    )
     cursor = conn.cursor()
-    
+
     # Get all conversations
     cursor.execute('''
         SELECT c.id, c.thread_id, c.db_path, c.created_at,
@@ -19,11 +27,11 @@ def view_conversations():
         ORDER BY last_message_time DESC
     ''')
     conversations = cursor.fetchall()
-    
+
     print("\n=== All Conversations ===")
     headers = ["ID", "Thread ID", "Database", "Created At", "Messages", "Last Message"]
     print(tabulate(conversations, headers=headers, tablefmt="grid"))
-    
+
     # For each conversation, show detailed messages
     for conv in conversations:
         conv_id, thread_id, db_path, created_at, msg_count, last_msg = conv
@@ -35,17 +43,17 @@ def view_conversations():
         print(f"Total Messages: {msg_count}")
         print(f"Last Message: {last_msg}")
         print(f"{'='*80}")
-        
+
         # Get all messages for this conversation
         cursor.execute('''
             SELECT m.id, m.role, m.content, m.timestamp, m.metadata
             FROM messages m
             JOIN conversations c ON m.conversation_id = c.id
-            WHERE c.thread_id = ?
+            WHERE c.thread_id = %s
             ORDER BY m.timestamp ASC
         ''', (thread_id,))
         messages = cursor.fetchall()
-        
+
         print("\nMessages in this conversation:")
         for msg in messages:
             msg_id, role, content, timestamp, metadata = msg
@@ -54,8 +62,13 @@ def view_conversations():
             print(f"Role: {role.upper()}")
             print(f"Content: {content}")
             if metadata:
-                print(f"Metadata: {json.loads(metadata)}")
+                try:
+                    print(f"Metadata: {json.loads(metadata)}")
+                except Exception:
+                    print(f"Metadata: {metadata}")
             print("-" * 80)
+    conn.close()
+    connector.close()
 
 if __name__ == "__main__":
     view_conversations() 
