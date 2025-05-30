@@ -123,20 +123,20 @@ if uploaded_file is not None:
             except Exception as e:
                 st.error(f"Error getting response from agent: {e}")
 
-        # Add a section to view conversation history
-        with st.sidebar:
-            st.header(":blue[Conversation History]")
-            conversations = conversation_store.get_all_conversations()
-            if conversations:
-                st.write(":green[Recent conversations:]")
-                for conv in conversations:
-                    thread_id, db_path, created_at, msg_count, last_msg = conv
-                    st.write(f"**Thread:** `{thread_id[:8]}...`  ")
-                    st.write(f"Messages: {msg_count}")
-                    st.write(f"Last message: {last_msg}")
-                    st.write("---")
-            else:
-                st.write(":gray[No conversation history yet.]")
+        #Testing conversation history
+        # with st.sidebar:
+        #     st.header(":blue[Conversation History]")
+        #     conversations = conversation_store.get_all_conversations()
+        #     if conversations:
+        #         st.write(":green[Recent conversations:]")
+        #         for conv in conversations:
+        #             thread_id, db_path, created_at, msg_count, last_msg = conv
+        #             st.write(f"**Thread:** `{thread_id[:8]}...`  ")
+        #             st.write(f"Messages: {msg_count}")
+        #             st.write(f"Last message: {last_msg}")
+        #             st.write("---")
+        #     else:
+        #         st.write(":gray[No conversation history yet.]")
 
     except Exception as e:
         st.error(f"Error processing Excel file: {e}")
