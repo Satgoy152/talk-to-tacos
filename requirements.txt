@@ -1,11 +1,11 @@
-streamlit>=1.32.0
-pandas>=2.0.0
-openpyxl>=3.0.0  # for Excel file support
-python-dotenv>=1.0.0
+streamlit
+pandas
+openpyxl
+python-dotenv
 sqlalchemy
-google-cloud-secret-manager>=2.18.0
-google-cloud-sql-connector>=1.5.0
-pymysql>=1.0.0
+google-cloud-secret-manager
+google-cloud-sql-connector
+pymysql
 numpy
-tabulate>=0.9.0
-mysql-connector-python>=8.0.0
+tabulate
+mysql-connector-python
