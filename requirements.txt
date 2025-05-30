@@ -9,4 +9,5 @@ pymysql
 numpy
 tabulate
 mysql-connector-python
+langchain-google-genai
 
