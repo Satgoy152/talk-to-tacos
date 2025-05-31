@@ -105,5 +105,21 @@ class ConversationStore:
             ''')
             return cursor.fetchall()
 
+    def get_popular_questions(self):
+        """Get popular questions from the database."""
+        try:
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT question 
+                    FROM popular_questions 
+                    ORDER BY created_at DESC
+                ''')
+                questions = cursor.fetchall()
+                return [row[0] for row in questions] if questions else []
+        except Exception as e:
+            print(f"Error fetching popular questions: {e}")
+            return []
+
     def __del__(self):
         self.connector.close() 

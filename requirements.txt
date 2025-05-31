@@ -11,4 +11,5 @@ tabulate
 mysql-connector-python
 langchain-google-genai
 langgraph
+python-dotenv
 

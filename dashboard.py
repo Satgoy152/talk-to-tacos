@@ -2,6 +2,13 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 import streamlit as st
+from database import create_db_from_excel, query_db
+from agent import get_agent_response
+from conversation_store import ConversationStore
+import uuid
+
+# Initialize conversation store
+conversation_store = ConversationStore()
 
 # Improved logo and title alignment with public logo URL
 st.markdown("""
@@ -21,15 +28,6 @@ if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
     with open("gcp_creds.json", "w") as f:
         f.write(st.secrets["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "gcp_creds.json"
-
-import pandas as pd
-from database import create_db_from_excel, query_db
-from agent import get_agent_response
-from conversation_store import ConversationStore
-import uuid
-
-# Initialize conversation store
-conversation_store = ConversationStore()
 
 # File uploader
 st.markdown("""
@@ -60,6 +58,7 @@ if uploaded_file is not None:
         if "messages" not in st.session_state:
             st.session_state.messages = []
 
+
         # Initialize a new thread_id for a new file upload/session
         if "thread_id" not in st.session_state:
             st.session_state.thread_id = str(uuid.uuid4())
@@ -74,9 +73,9 @@ if uploaded_file is not None:
             )
             
             # Load any existing conversation history
-            history = conversation_store.get_conversation_history(st.session_state.thread_id, db_path)
-            if history:
-                st.session_state.messages = history
+            # history = conversation_store.get_conversation_history(st.session_state.thread_id, db_path)
+            # if history:
+            #     st.session_state.messages = history
 
         # Display chat messages from history on app rerun
         for message in st.session_state.messages:
@@ -87,8 +86,23 @@ if uploaded_file is not None:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
 
+        # Add sidebar with popular questions
+        with st.sidebar:
+            st.header("Popular Questions")
+            
+            # Get questions from database using ConversationStore
+            popular_questions = conversation_store.get_popular_questions()
+            
+            # Display questions as buttons
+            selected_question = None
+            for question in popular_questions:
+                if st.button(question, key=question):
+                    selected_question = question
+
+        user_input = st.chat_input("Ask anything about your Tacos report:")
+        prompt = selected_question or user_input
         # React to user input
-        if prompt := st.chat_input("Ask anything about your Tacos report:"):
+        if prompt:
             # Display user message in chat message container
             st.chat_message("user").markdown(prompt)
             # Add user message to chat history
@@ -148,9 +162,8 @@ if uploaded_file is not None:
         #     os.remove(db_path)
 else:
     st.markdown("""
-        <div style='background: #dbeafe; color: #111; padding: 1.2rem 1.5rem; border-radius: 16px; font-size: 1.18rem; font-weight: 500;'>
+        <div style='background: #dbeafe; color: #111; padding: 1.2rem 1.5rem; border-radius: 16px; font-size: 1.18rem; font-weight: 500; text-align: left; width: fit-content; min-width: 350px;'>
             Please upload a Tacos Excel report to begin.
         </div>
     """, unsafe_allow_html=True)
-    
     st.session_state.file_uploaded = False
