@@ -2,3 +2,4 @@
 __pycache__/
 conversations.db
 temp_db.sqlite
+.venv310/
