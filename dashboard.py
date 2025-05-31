@@ -7,6 +7,10 @@ from agent import get_agent_response
 from conversation_store import ConversationStore
 import uuid
 
+if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
+    with open("gcp_creds.json", "w") as f:
+        f.write(st.secrets["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "gcp_creds.json"
 # Initialize conversation store
 conversation_store = ConversationStore()
 
@@ -23,11 +27,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Handle Google credentials
-if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
-    with open("gcp_creds.json", "w") as f:
-        f.write(st.secrets["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "gcp_creds.json"
+
 
 # File uploader
 st.markdown("""
