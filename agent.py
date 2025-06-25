@@ -151,24 +151,19 @@ def get_agent_response(db_path: str, user_query: str, thread_id: str): # Added t
     config = {"configurable": {"thread_id": thread_id}}
 
     # Invoke the agent. The input is a list of messages.
-    response_messages = agent_executor.invoke(
+    for token, metadata in agent_executor.stream(
         {"messages": [HumanMessage(content=user_query)]}, # Use HumanMessage
-        config
-    )
+        config,
+        stream_mode = "messages",
+    ):
     
     # The agent's response is the last message in the list of messages
-    if response_messages and "messages" in response_messages and response_messages["messages"]:
-        last_message = response_messages["messages"][-1]
-        # Ensure it's an AI response and has content
-        if hasattr(last_message, 'role') and (last_message.role.lower() == 'ai' or last_message.role.lower() == 'assistant') and hasattr(last_message, 'content'):
-            return last_message.content
-        elif isinstance(last_message, dict) and last_message.get("role", "").lower() in ['ai', 'assistant'] and "content" in last_message: # If it's a dict
-             return last_message["content"]
-        # Fallback if the last message isn't structured as expected but has content
-        elif hasattr(last_message, 'content'):
-            return last_message.content
+        if metadata["langgraph_node"] == "agent":
+                    yield token.content
+        elif metadata["langgraph_node"] == "tools":
+                yield "Querying database"
 
-    return "Sorry, I couldn't get a valid response from the agent."
+    # return "Sorry, I couldn't get a valid response from the agent."
 
 # (Keep the __main__ block commented out or remove if not needed for direct testing of this file)
 # if __name__ == '__main__':

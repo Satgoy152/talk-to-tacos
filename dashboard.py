@@ -61,10 +61,9 @@ if uploaded_file is not None:
                     st.session_state.thread_id = str(uuid.uuid4())
                     print(f"Fallback: Initialized new thread_id in chat input: {st.session_state.thread_id}")
 
-                response = get_agent_response(db_path, prompt, st.session_state.thread_id)  # Pass thread_id
                 # Display assistant response in chat message container
                 with st.chat_message("assistant"):
-                    st.markdown(response)
+                    response = st.write_stream(get_agent_response(db_path, prompt, st.session_state.thread_id))
                 # Add assistant response to chat history
                 st.session_state.messages.append({"role": "assistant", "content": response})
             except Exception as e:
