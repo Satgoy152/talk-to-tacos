@@ -2,15 +2,26 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 import streamlit as st
+import time
+import logging
 from database import create_db_from_excel, query_db
 from agent import get_agent_response
 from conversation_store import ConversationStore
 import uuid
 
-if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
-    with open("gcp_creds.json", "w") as f:
-        f.write(st.secrets["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "gcp_creds.json"
+# Configure logging for dashboard to output to console/terminal
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()  # This ensures output goes to console/terminal
+    ]
+)
+
+# if "GOOGLE_APPLICATION_CREDENTIALS_JSON" in st.secrets:
+#     with open("gcp_creds.json", "w") as f:
+#         f.write(st.secrets["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
+#     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "gcp_creds.json"
 # Initialize conversation store
 conversation_store = ConversationStore()
 
@@ -119,7 +130,13 @@ if uploaded_file is not None:
 
             # Get agent response
             try:
+                dashboard_start_time = time.time()
+                
                 response = get_agent_response(db_path, prompt, st.session_state.thread_id)
+                
+                dashboard_end_time = time.time()
+                dashboard_total_time = dashboard_end_time - dashboard_start_time
+                
                 # Display assistant response in chat message container
                 with st.chat_message("assistant", avatar="https://app.optiwise.ai/assets/olivia-IF0pvoa5.png"):
                     st.markdown(response)
@@ -132,9 +149,17 @@ if uploaded_file is not None:
                     "assistant",
                     response,
                     db_path,
-                    metadata={"db_path": db_path}
+                    metadata={"db_path": db_path, "response_time_seconds": dashboard_total_time}
                 )
+                
+                # Display timing info in sidebar for debugging (you can remove this later)
+                with st.sidebar:
+                    st.write(f"⏱️ Response time: {dashboard_total_time:.2f}s")
+                    
             except Exception as e:
+                dashboard_end_time = time.time()
+                dashboard_total_time = dashboard_end_time - dashboard_start_time
+                logging.error(f"Dashboard error after {dashboard_total_time:.2f}s: {e}")
                 st.error(f"Error getting response from agent: {e}")
 
         #Testing conversation history

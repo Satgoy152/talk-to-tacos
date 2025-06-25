@@ -1,4 +1,6 @@
 import os
+import time
+import logging
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate # Keep for potential future use
 from langchain_core.tools import tool
@@ -7,6 +9,15 @@ from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import InMemorySaver # Added for memory
 from database import query_db, get_db_schema
 from dotenv import load_dotenv
+
+# Configure logging to output to console/terminal
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()  # This ensures output goes to console/terminal
+    ]
+)
 
 load_dotenv()
 
@@ -26,8 +37,17 @@ def database_query_tool(query: str, db_path: str):
     Use this tool to answer questions about the data in the database.
     Example query: 'SELECT * FROM customers WHERE country = "USA"';
     """
+    db_start_time = time.time()
     print(f"Executing query: {query} on db: {db_path}")
+    logging.info(f"🔍 DB Query started: {query[:100]}...")
+    
     result = query_db(db_path, query)
+    
+    db_end_time = time.time()
+    db_execution_time = db_end_time - db_start_time
+    result_size = len(str(result)) if result else 0
+    logging.info(f"📊 DB Query completed in {db_execution_time:.3f}s | Result size: {result_size} chars")
+    
     return result
 
 # System prompt template string
@@ -129,7 +149,7 @@ def get_or_create_agent_executor(db_path: str):
     
     # Format the system prompt with the dynamic schema
     formatted_system_prompt = SYSTEM_PROMPT_TEMPLATE.format(db_schema=formatted_schema)
-    print(f"Formatted system prompt: {formatted_system_prompt}")  # Debugging line
+    # print(f"Formatted system prompt: {formatted_system_prompt}")  # Debugging line
 
     agent_executor = create_react_agent(
         llm,
@@ -145,30 +165,64 @@ def get_agent_response(db_path: str, user_query: str, thread_id: str): # Added t
     """
     Gets a response from the Langgraph ReAct agent, maintaining conversation history.
     """
-    agent_executor = get_or_create_agent_executor(db_path)
-
-    # Configuration for invoking the agent with a specific thread_id for memory
-    config = {"configurable": {"thread_id": thread_id}}
-
-    # Invoke the agent. The input is a list of messages.
-    response_messages = agent_executor.invoke(
-        {"messages": [HumanMessage(content=user_query)]}, # Use HumanMessage
-        config
-    )
+    start_time = time.time()
     
-    # The agent's response is the last message in the list of messages
-    if response_messages and "messages" in response_messages and response_messages["messages"]:
-        last_message = response_messages["messages"][-1]
-        # Ensure it's an AI response and has content
-        if hasattr(last_message, 'role') and (last_message.role.lower() == 'ai' or last_message.role.lower() == 'assistant') and hasattr(last_message, 'content'):
-            return last_message.content
-        elif isinstance(last_message, dict) and last_message.get("role", "").lower() in ['ai', 'assistant'] and "content" in last_message: # If it's a dict
-             return last_message["content"]
-        # Fallback if the last message isn't structured as expected but has content
-        elif hasattr(last_message, 'content'):
-            return last_message.content
+    try:
+        logging.info(f"🚀 Starting agent response | Query: '{user_query[:50]}...' | Thread: {thread_id[:8]}")
+        
+        agent_executor = get_or_create_agent_executor(db_path)
 
-    return "Sorry, I couldn't get a valid response from the agent."
+        # Configuration for invoking the agent with a specific thread_id for memory
+        config = {"configurable": {"thread_id": thread_id}}
+
+        # Invoke the agent. The input is a list of messages.
+        agent_invoke_start = time.time()
+        logging.info(f"🤖 Starting Gemini agent processing...")
+        
+        response_messages = agent_executor.invoke(
+            {"messages": [HumanMessage(content=user_query)]}, # Use HumanMessage
+            config
+        )
+        
+        agent_invoke_end = time.time()
+        agent_processing_time = agent_invoke_end - agent_invoke_start
+        logging.info(f"🧠 Gemini agent processing completed in {agent_processing_time:.3f}s")
+
+        for message in response_messages["messages"]:
+            message.pretty_print()
+            print("\n")
+
+        
+        # The agent's response is the last message in the list of messages
+        if response_messages and "messages" in response_messages and response_messages["messages"]:
+            last_message = response_messages["messages"][-1]
+            # Ensure it's an AI response and has content
+            if hasattr(last_message, 'role') and (last_message.role.lower() == 'ai' or last_message.role.lower() == 'assistant') and hasattr(last_message, 'content'):
+                response_content = last_message.content
+            elif isinstance(last_message, dict) and last_message.get("role", "").lower() in ['ai', 'assistant'] and "content" in last_message: # If it's a dict
+                response_content = last_message["content"]
+            # Fallback if the last message isn't structured as expected but has content
+            elif hasattr(last_message, 'content'):
+                response_content = last_message.content
+            else:
+                response_content = "Sorry, I couldn't get a valid response from the agent."
+        else:
+            response_content = "Sorry, I couldn't get a valid response from the agent."
+            
+        end_time = time.time()
+        total_time = end_time - start_time
+        
+        # Detailed timing breakdown
+        logging.info(f"Gemini: {agent_processing_time:.3f}s | Response: {len(response_content)} chars | Thread: {thread_id[:8]}")
+        logging.info("========================================================================================")
+        
+        return response_content
+        
+    except Exception as e:
+        end_time = time.time()
+        total_time = end_time - start_time
+        logging.error(f"❌ Agent error after {total_time:.3f}s | Query: '{user_query[:50]}...' | Error: {str(e)}")
+        raise e
 
 # (Keep the __main__ block commented out or remove if not needed for direct testing of this file)
 # if __name__ == '__main__':
